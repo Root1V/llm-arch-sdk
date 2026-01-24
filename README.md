@@ -24,7 +24,7 @@ Este SDK proporciona una interfaz unificada para interactuar con servidores LLM 
 
 1. Clona el repositorio:
    ```bash
-   git clone <url-del-repositorio>
+   git clone https://github.com/Root1V/llm-arch-sdk.git
    cd llm_arch_sdk
    ```
 

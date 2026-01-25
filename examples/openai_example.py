@@ -13,8 +13,8 @@ from llm_arch_sdk.adapters.open_ai_adapter import OpenAIAdapter
 
 # Configuración de ejemplo (ajusta según tu servidor), Cambiar por el servidor OpenAI-compatible
 os.environ["LLM_BASE_URL"] = "http://localhost:8080"  
-os.environ["LLM_USERNAME"] = "user"
-os.environ["LLM_PASSWORD"] = "oooooooooo"
+os.environ["LLM_USERNAME"] = "user------"
+os.environ["LLM_PASSWORD"] = "00000000000"
 
 def example_chat_completions(client):
     # 1. Probar Chat Completions

@@ -10,9 +10,9 @@ import os
 from llm_arch_sdk.adapters.llama_adapter import LlamaAdapter
 
 # Configuración de ejemplo (usar variables de entorno en producción)
-os.environ["LLM_BASE_URL"] = "http://localhost:8080"  # Cambiar por tu servidor
-os.environ["LLM_USERNAME"] = "user"
-os.environ["LLM_PASSWORD"] = "oooooooooooooo"
+os.environ["LLM_BASE_URL"] = "http://localhost:8080"  
+os.environ["LLM_USERNAME"] = "user------"
+os.environ["LLM_PASSWORD"] = "00000000000"
 
 def example_health(client):
     print("\n🔍 Probando Health Check...")

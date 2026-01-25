@@ -5,16 +5,17 @@ from .http_client_factory import HttpClientFactory
 
 logger = logging.getLogger("llm.sdk.transport.auth_http_client_factory")
 
-class AuthHttpClientFactory:
+class AuthHttpClientFactory(HttpClientFactory):
 
-    @staticmethod
+    @classmethod
     def create(
+        cls,
         auth: TokenManager,
         timeout: float = 60.0,
         extra_headers: dict = None,
     ) -> httpx.Client:
-        
-        headers = HttpClientFactory._default_headers(extra_headers)
+
+        headers = cls._default_headers(extra_headers)
 
         logger.debug("Creando httpx.Client con Autenticacion común para LLM")
 

@@ -31,6 +31,7 @@ Este SDK proporciona una interfaz unificada para interactuar con servidores LLM 
 2. Instala las dependencias:
    ```bash
    uv sync
+   uv add --dev pytest 
    ```
 
 3. Activa el entorno virtual:
@@ -42,6 +43,31 @@ Este SDK proporciona una interfaz unificada para interactuar con servidores LLM 
    ```bash
    pip install -e .
    ```
+
+5. Build del paquete
+   ```bash
+   uv build
+   ```
+
+### Instalación en el cliente desde repositorio local
+
+1. Ubicar el repositorio con el paquete build
+```
+/opt/python-repo/
+└── llm_arch_sdk-0.1.0-py3-none-any.whl
+```
+
+2. Instalacion desde repositotio
+```bash
+   pip install --find-links=/opt/python-repo llm_arch_sdk
+
+   # or
+
+   uv pip install --find-links=/opt/python-repo llm_arch_sdk
+   uv add --find-links ../repo_pi llm-arch-sdk
+   uv sync --find-links ../repo_pi
+
+```
 
 ## Ejemplos de uso
 

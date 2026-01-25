@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from .base import BaseLLMAdapter
 from ..auth.token_manager import TokenManager
-from ..transport.auth_http_client_factory import AuthHttpClientFactory
+from ..transport.auth_http_client_factory import AuthHttpClientFactory, HttpClientFactory
 
 
 load_dotenv()
@@ -55,6 +55,7 @@ class OpenAIAdapter(BaseLLMAdapter):
                 base_url=self.base_url,
                 api_key="unused", 
                 http_client=self._http_client,
+                default_headers=HttpClientFactory._default_headers()
             )
 
         return self._openai_client

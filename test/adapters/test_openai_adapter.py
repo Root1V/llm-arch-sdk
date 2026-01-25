@@ -83,7 +83,8 @@ class TestOpenAIAdapter:
         mock_openai_class.assert_called_once_with(
             base_url='https://api.openai.com',
             api_key='unused',
-            http_client=mock_http_client
+            http_client=mock_http_client,
+            default_headers={'Accept': 'application/json', 'User-Agent': 'SDK-Architecture-PE/LLM-Client/1.0'},
         )
 
     @patch.dict(os.environ, {'LLM_BASE_URL': 'https://custom.api.com'}, clear=True)
@@ -102,5 +103,6 @@ class TestOpenAIAdapter:
         mock_openai_class.assert_called_once_with(
             base_url="https://test.api.com",
             api_key='unused',
-            http_client=mock_http_client
+            http_client=mock_http_client,
+            default_headers={'Accept': 'application/json', 'User-Agent': 'SDK-Architecture-PE/LLM-Client/1.0'},
         )

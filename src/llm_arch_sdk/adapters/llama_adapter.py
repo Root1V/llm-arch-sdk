@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 
 from .base import BaseLLMAdapter
 from ..client.llm_client import LlmClient
-from ..auth.token_manager import TokenManager
 from ..transport.auth_http_client_factory import AuthHttpClientFactory
 
 load_dotenv()
@@ -33,10 +32,8 @@ class LlamaAdapter(BaseLLMAdapter):
 
         self._validate_config()
 
-        self._auth = TokenManager()
         self._llm_client: LlmClient = None
         self._http_client = AuthHttpClientFactory.create(
-            auth=self._auth,
             timeout=self.timeout,
         )
 

@@ -1,5 +1,6 @@
 import httpx
 import logging
+from typing import Optional
 from ..auth.token_manager import TokenManager
 from .http_client_factory import HttpClientFactory
 
@@ -10,10 +11,13 @@ class AuthHttpClientFactory(HttpClientFactory):
     @classmethod
     def create(
         cls,
-        auth: TokenManager,
+        auth: Optional[TokenManager] = None,
         timeout: float = 60.0,
         extra_headers: dict = None,
     ) -> httpx.Client:
+
+        if auth is None:
+            auth = TokenManager()
 
         headers = cls._default_headers(extra_headers)
 

@@ -5,8 +5,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 
 from .base import BaseLLMAdapter
-from ..auth.token_manager import TokenManager
-from ..transport.auth_http_client_factory import AuthHttpClientFactory, HttpClientFactory
+from ..transport.auth_http_client_factory import AuthHttpClientFactory
 
 
 load_dotenv()
@@ -34,10 +33,8 @@ class OpenAIAdapter(BaseLLMAdapter):
 
         self._validate_config()
 
-        self._auth = TokenManager()
         self._openai_client: OpenAI = None
         self._http_client = AuthHttpClientFactory.create(
-            auth=self._auth,
             timeout=self.timeout,
         )
 
@@ -55,7 +52,7 @@ class OpenAIAdapter(BaseLLMAdapter):
                 base_url=self.base_url,
                 api_key="unused", 
                 http_client=self._http_client,
-                default_headers=HttpClientFactory._default_headers()
+                default_headers=AuthHttpClientFactory._default_headers()
             )
 
         return self._openai_client

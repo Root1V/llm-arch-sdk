@@ -9,10 +9,12 @@ Este SDK proporciona una interfaz unificada para interactuar con servidores LLM 
 ## Características
 
 - **Autenticación automática**: Manejo de tokens con renovación automática.
+- **TokenManager opcional**: Crea automáticamente una instancia si no se proporciona.
 - **Circuit Breaker**: Protección contra fallos en las llamadas a la API.
 - **Adaptadores múltiples**: Soporte para OpenAI y Llama.
 - **Normalización de respuestas**: Estandarización de respuestas de diferentes proveedores.
 - **Cliente HTTP robusto**: Uso de httpx con configuraciones personalizables.
+- **Ejemplos con .env**: Los ejemplos cargan variables desde archivo `.env` usando python-dotenv.
 
 ## Instalación
 
@@ -71,30 +73,33 @@ Este SDK proporciona una interfaz unificada para interactuar con servidores LLM 
 
 ## Ejemplos de uso
 
-La carpeta `examples/` contiene scripts demostrativos para probar las funcionalidades del SDK:
+La carpeta `examples/` contiene scripts demostrativos para probar las funcionalidades del SDK.
 
-### Ejemplo básico con Llama
+**Nota importante**: Los ejemplos cargan las variables de entorno desde un archivo `.env`. El SDK automatiza la carga usando `python-dotenv`, así que no necesitas escribir las credenciales en el código.
+
+### Configuración de autenticación
+
+Crea un archivo `.env` en la carpeta `examples/`:
+
+```
+LLM_BASE_URL=http://localhost:8080
+LLM_USERNAME=tu_usuario
+LLM_PASSWORD=tu_contraseña
+```
+
+### Ejecutar ejemplos
+
+#### Ejemplo básico con Llama
 ```bash
 uv run python examples/basic_usage.py
 ```
 
-### Ejemplo con OpenAI
+#### Ejemplo con OpenAI
 ```bash
 uv run python examples/openai_example.py
 ```
 
 Estos ejemplos incluyen manejo de errores y funcionan tanto con servidores reales como con configuraciones de prueba.
-
-### Configuración de autenticación
-
-Crea un archivo `.env` en la raíz del proyecto:
-
-```
-LLM_BASE_URL=
-LLM_USERNAME=
-LLM_PASSWORD=
-
-```
 
 ## Estructura del Proyecto
 
@@ -200,6 +205,28 @@ El proyecto incluye 83 pruebas unitarias organizadas en una estructura que refle
 - **Modelos**: Parsing de respuestas JSON, validación de datos.
 - **Normalizadores**: Detección de completitud semántica, limpieza de texto.
 - **Transporte**: Manejo de HTTP, errores, timeouts.
+
+## Historial de cambios
+
+### v0.3.0
+- ✅ TokenManager ahora es **opcional** en `AuthHttpClientFactory.create()`
+- ✅ Se crea automáticamente una instancia si no se proporciona
+- ✅ Ejemplos actualizados para usar `.env` con `python-dotenv`
+- ✅ Todos los 83 tests pasan correctamente
+
+### v0.2.0
+- 🔧 Refactor: Consolidación de manejo de headers y mejora de herencia en HTTP client factories
+- Mejora de la arquitectura del transporte
+
+### v0.1.0
+- 🎉 Release inicial del LLM Arch SDK
+- ✅ Autenticación automática con TokenManager
+- ✅ Circuit Breaker para protección contra fallos
+- ✅ Adaptadores para Llama y OpenAI
+- ✅ Cliente HTTP robusto con httpx
+- ✅ Normalización de respuestas
+- ✅ 83 tests unitarios
+- ✅ Documentación y ejemplos de uso
 
 ## Contribución
 

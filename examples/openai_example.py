@@ -9,12 +9,11 @@ Este script demuestra cómo usar el adapter de OpenAI para:
 """
 
 import os
+from dotenv import load_dotenv
 from llm_arch_sdk.adapters.open_ai_adapter import OpenAIAdapter
 
-# Configuración de ejemplo (ajusta según tu servidor), Cambiar por el servidor OpenAI-compatible
-os.environ["LLM_BASE_URL"] = "http://localhost:8080"  
-os.environ["LLM_USERNAME"] = "user------"
-os.environ["LLM_PASSWORD"] = "00000000000"
+# Cargar variables de entorno desde el archivo .env
+load_dotenv()
 
 def example_chat_completions(client):
     # 1. Probar Chat Completions

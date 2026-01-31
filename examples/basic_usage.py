@@ -7,12 +7,11 @@ con autenticación automática y manejo de errores.
 """
 
 import os
+from dotenv import load_dotenv
 from llm_arch_sdk.adapters.llama_adapter import LlamaAdapter
 
-# Configuración de ejemplo (usar variables de entorno en producción)
-os.environ["LLM_BASE_URL"] = "http://localhost:8080"  
-os.environ["LLM_USERNAME"] = "user------"
-os.environ["LLM_PASSWORD"] = "00000000000"
+# Cargar variables de entorno desde el archivo .env
+load_dotenv()
 
 def example_health(client):
     print("\n🔍 Probando Health Check...")

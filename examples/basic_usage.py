@@ -91,8 +91,10 @@ def main():
     print("🚀 Probando LLM Arch SDK - LLMAdapter")
 
     try:
-        # Crear adapter
-        adapter = LlamaAdapter()
+        # Crear adapter con parámetros personalizados
+        adapter = LlamaAdapter(
+            timeout=60.0
+        )
         print("✅ Adapter creado exitosamente")
 
         # Obtener cliente

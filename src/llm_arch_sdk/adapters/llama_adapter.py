@@ -26,9 +26,11 @@ class LlamaAdapter(BaseLLMAdapter):
         self,
         base_url: str = None,
         timeout: float = 60.0,
+        **kwargs
     ):
         self.base_url = base_url or os.environ.get("LLM_BASE_URL")
         self.timeout = timeout
+        self.client_kwargs = kwargs
 
         self._validate_config()
 
@@ -46,7 +48,8 @@ class LlamaAdapter(BaseLLMAdapter):
             logger.info("Inicializando cliente LLM")
             self._llm_client = LlmClient(
                 base_url=self.base_url,
-                http_client=self._http_client
+                http_client=self._http_client,
+                **self.client_kwargs
             )
         return self._llm_client
 

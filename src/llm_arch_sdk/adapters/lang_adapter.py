@@ -1,25 +1,25 @@
 import os
 import logging
-import httpx
-from openai import OpenAI
 from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
 
-from .base import BaseLLMAdapter
 from ..transport.auth_http_client_factory import AuthHttpClientFactory
+from .base import BaseLLMAdapter
 
 
 load_dotenv()
 
-logger = logging.getLogger("llm.sdk.adapters.openai")
+logger = logging.getLogger("llm.sdk.adapters.langchain")
 
-class OpenAIAdapter(BaseLLMAdapter):
+class LangChainAdapter(BaseLLMAdapter):
     """
-    Adapter enterprise para instanciar un cliente OpenAI
+    Adapter enterprise para instanciar un cliente ChatOpenAI de LangChain
 
     Encapsula:
-    - TokenManager
-    - httpx.Client
+    - ChatOpenAI client
     - base_url
+    - api_key
+    - model
     - timeouts
     """
 
@@ -35,7 +35,7 @@ class OpenAIAdapter(BaseLLMAdapter):
 
         self._validate_config()
 
-        self._openai_client: OpenAI = None
+        self._langchain_client: ChatOpenAI = None
         self._http_client = AuthHttpClientFactory.create(
             timeout=self.timeout,
         )
@@ -43,22 +43,22 @@ class OpenAIAdapter(BaseLLMAdapter):
     # -------------------------
     # Public API
     # -------------------------
-    def client(self) -> OpenAI:
+    def client(self) -> ChatOpenAI:
         """
-        Devuelve una instancia singleton de OpenAI
+        Devuelve una instancia singleton de ChatOpenAI de LangChain
         completamente configurada.
         """
-        if not self._openai_client:
-            logger.info("Inicializando cliente OpenAI")
-            self._openai_client =  OpenAI(
+        if not self._langchain_client:
+            logger.info("Inicializando cliente LangChain ChatOpenAI")
+            self._langchain_client = ChatOpenAI(
                 base_url=self.base_url,
-                api_key="unused", 
+                api_key="unused",
                 http_client=self._http_client,
                 default_headers=AuthHttpClientFactory._default_headers(),
                 **self.client_kwargs
             )
 
-        return self._openai_client
+        return self._langchain_client
 
     # -------------------------
     # Validation

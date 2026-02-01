@@ -70,8 +70,10 @@ def example_embeddings(client):
 def main():
     print("🚀 Probando LLM Arch SDK con OpenAI - Ejemplo completo")
     try:
-        # Crear adapter
-        adapter = OpenAIAdapter()
+        # Crear adapter con parámetros personalizados
+        adapter = OpenAIAdapter(
+            timeout=60.0
+        )
         print("✅ OpenAI Adapter creado")
 
         # Obtener cliente

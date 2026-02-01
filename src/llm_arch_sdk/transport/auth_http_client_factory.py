@@ -15,9 +15,8 @@ class AuthHttpClientFactory(HttpClientFactory):
         timeout: float = 60.0,
         extra_headers: dict = None,
     ) -> httpx.Client:
-
-        if auth is None:
-            auth = TokenManager()
+            
+        auth = auth or TokenManager()
 
         headers = cls._default_headers(extra_headers)
 

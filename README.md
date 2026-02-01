@@ -53,22 +53,30 @@ Este SDK proporciona una interfaz unificada para interactuar con servidores LLM 
 
 ### Instalación en el cliente desde repositorio local
 
-1. Ubicar el repositorio con el paquete build
+1. Clona el respoitorio en la version que requieras
 ```
-/opt/python-repo/
-└── llm_arch_sdk-0.1.0-py3-none-any.whl
+git fetch --tags && git checkout v0.3.0
 ```
 
-2. Instalacion desde repositotio
-```bash
-   pip install --find-links=/opt/python-repo llm_arch_sdk
+2. Crea el paquete del sdk
+```
+uv build
+```
 
-   # or
+3. Copia el sdk compilado a la carpeta de repo (opcional)
+```
+cp /llm_arch_sdk/dist/llm_arch_sdk-0.3.0* /opt/python-repo/
+```
 
-   uv pip install --find-links=/opt/python-repo llm_arch_sdk
-   uv add --find-links ../repo_pi llm-arch-sdk
-   uv sync --find-links ../repo_pi
+4. Agrega el sdk en tu proyecto y sincroniza las dependencias
+```
+uv add --find-links /opt/python-repo/ llm-arch-sdk
+uv sync --find-links /opt/python-repo/
+```
 
+5. Otra alternativa de instalacion usando "pip"
+```
+pip install --find-links=/opt/python-repo llm_arch_sdk
 ```
 
 ## Ejemplos de uso
@@ -202,6 +210,8 @@ El proyecto incluye 90 pruebas unitarias organizadas en una estructura que refle
 - `test/adapters/`: Tests para adaptadores de proveedores (Llama, OpenAI)
 - `test/models/`: Tests para modelos de datos y parsing JSON
 - `test/normalizers/`: Tests para normalización de contenido
+
+### Cobertura de pruebas
 
 - **Cobertura de pruebas**: 90 tests unitarios
 - **TokenManager**: Autenticación, renovación de tokens, circuit breaker.

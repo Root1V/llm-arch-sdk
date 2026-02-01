@@ -11,7 +11,7 @@ Este SDK proporciona una interfaz unificada para interactuar con servidores LLM 
 - **Autenticación automática**: Manejo de tokens con renovación automática.
 - **TokenManager opcional**: Crea automáticamente una instancia si no se proporciona.
 - **Circuit Breaker**: Protección contra fallos en las llamadas a la API.
-- **Adaptadores múltiples**: Soporte para OpenAI y Llama.
+- **Adaptadores múltiples**: Soporte para Llama, OpenAI y LangChain (ChatOpenAI).
 - **Normalización de respuestas**: Estandarización de respuestas de diferentes proveedores.
 - **Cliente HTTP robusto**: Uso de httpx con configuraciones personalizables.
 - **Ejemplos con .env**: Los ejemplos cargan variables desde archivo `.env` usando python-dotenv.
@@ -99,6 +99,11 @@ uv run python examples/basic_usage.py
 uv run python examples/openai_example.py
 ```
 
+#### Ejemplo con LangChain
+```bash
+uv run python examples/langchain_example.py
+```
+
 Estos ejemplos incluyen manejo de errores y funcionan tanto con servidores reales como con configuraciones de prueba.
 
 ## Estructura del Proyecto
@@ -111,7 +116,8 @@ llm_arch_sdk/
 │       │   ├── __init__.py
 │       │   ├── base.py
 │       │   ├── llama_adapter.py
-│       │   └── open_ai_adapter.py
+       │   ├── open_ai_adapter.py
+       │   └── lang_adapter.py
 │       ├── auth/
 │       │   ├── __init__.py
 │       │   └── token_manager.py
@@ -160,7 +166,8 @@ llm_arch_sdk/
 │       └── test_circuit_breaker.py
 ├── examples/
 │   ├── basic_usage.py
-│   └── openai_example.py
+│   ├── openai_example.py
+│   └── langchain_example.py
 ├── pyproject.toml
 ├── uv.lock
 ├── .gitignore
@@ -185,7 +192,7 @@ Para ejecutar las pruebas:
 uv run pytest test/
 ```
 
-El proyecto incluye 83 pruebas unitarias organizadas en una estructura que refleja el código fuente, facilitando el mantenimiento y la localización de tests relacionados con módulos específicos.
+El proyecto incluye 90 pruebas unitarias organizadas en una estructura que refleja el código fuente, facilitando el mantenimiento y la localización de tests relacionados con módulos específicos.
 
 ### Estructura de pruebas
 
@@ -196,17 +203,23 @@ El proyecto incluye 83 pruebas unitarias organizadas en una estructura que refle
 - `test/models/`: Tests para modelos de datos y parsing JSON
 - `test/normalizers/`: Tests para normalización de contenido
 
-### Cobertura de pruebas
-
+- **Cobertura de pruebas**: 90 tests unitarios
 - **TokenManager**: Autenticación, renovación de tokens, circuit breaker.
 - **CircuitBreaker**: Estados CLOSED/OPEN/HALF_OPEN, timeouts.
 - **Clientes**: ChatCompletions, Completions, Embeddings.
-- **Adaptadores**: LlamaAdapter, OpenAIAdapter.
+- **Adaptadores**: LlamaAdapter, OpenAIAdapter, LangChainAdapter.
 - **Modelos**: Parsing de respuestas JSON, validación de datos.
 - **Normalizadores**: Detección de completitud semántica, limpieza de texto.
 - **Transporte**: Manejo de HTTP, errores, timeouts.
 
 ## Historial de cambios
+
+### v0.4.0 (En desarrollo)
+- 🚀 Nuevo adaptador LangChainAdapter para integración con LangChain
+- 📝 Soporte para ChatOpenAI de LangChain
+- ✅ 7 nuevos tests unitarios para LangChainAdapter (90 tests totales)
+- 🔄 Patrón **kwargs implementado en todos los adaptadores
+- 📚 Nuevo ejemplo: `examples/langchain_example.py`
 
 ### v0.3.0
 - ✅ TokenManager ahora es **opcional** en `AuthHttpClientFactory.create()`

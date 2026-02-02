@@ -57,7 +57,7 @@ class CircuitBreaker:
 
     def record_failure(self):
         self._failure_count += 1
-        logger.warning("Fallo registrado en circuit breaker:  %s/%s", self._failure_count, self.failure_threshold)
+        logger.warning("Fallo, registrado en circuit breaker:  %s/%s", self._failure_count, self.failure_threshold)
 
         if self._failure_count >= self.failure_threshold:
             self._state = CircuitState.OPEN

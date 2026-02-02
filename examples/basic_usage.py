@@ -6,12 +6,20 @@ Este script demuestra cómo usar el SDK para hacer llamadas a un servidor LLM
 con autenticación automática y manejo de errores.
 """
 
+import logging
 import os
 from dotenv import load_dotenv
 from llm_arch_sdk.adapters.llama_adapter import LlamaAdapter
 
-# Cargar variables de entorno desde el archivo .env
-load_dotenv()
+# Configurar logging para ver los logs de Langfuse
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# Cargar variables de entorno desde el archivo .env (forzado)
+_env_path = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(dotenv_path=_env_path, override=True)
 
 def example_health(client):
     print("\n🔍 Probando Health Check...")
@@ -26,6 +34,8 @@ def example_health(client):
 def example_chat_completions(client):
     print("\n📝 Probando Chat Completions...")
     try:
+        trace_metadata = {"flow": "basic_usage", "user_id": "demo"}
+        trace_tags = ["example", "chat", "basic_usage"]
         chat_response = client.chat.create(
             model="llama-7b",  
             messages=[
@@ -33,7 +43,9 @@ def example_chat_completions(client):
                 {"role": "user", "content": "Hola, ¿cuál es la capital de Francia?"}
             ],
             max_tokens=100,
-            temperature=0.7
+            temperature=0.7,
+            trace_metadata=trace_metadata,
+            trace_tags=trace_tags,
         )
         print("✅ Chat completion exitoso:")
         print(f"   Respuesta: {chat_response.choices[0].message.content}")
@@ -45,11 +57,15 @@ def example_chat_completions(client):
 def example_text_completions(client):
     print("\n✍️  Probando Text Completions...")
     try:
+        trace_metadata = {"flow": "basic_usage", "user_id": "demo"}
+        trace_tags = ["example", "completions", "basic_usage"]
         completion_response = client.completions.create(
             model="llama-7b", 
             prompt="Escribe un poema corto sobre la inteligencia artificial.",
             max_tokens=50,
-            temperature=0.7
+            temperature=0.7,
+            trace_metadata=trace_metadata,
+            trace_tags=trace_tags,
         )
         print("✅ Text completion exitoso:")
         print(f"   Respuesta: {completion_response.content.strip()}")
@@ -62,9 +78,13 @@ def example_embeddings(client):
     # Probar embeddings
     print("\n🧠 Probando Embeddings...")
     try:
+        trace_metadata = {"flow": "basic_usage", "user_id": "demo"}
+        trace_tags = ["example", "embeddings", "basic_usage"]
         response = client.embeddings.create(
             model="llama-embedding-7b",
-            input=["Inteligencia artificial", "Aprendizaje automático"]
+            input=["Inteligencia artificial", "Aprendizaje automático"],
+            trace_metadata=trace_metadata,
+            trace_tags=trace_tags,
         )
         print("✅ Embeddings exitoso:")
         

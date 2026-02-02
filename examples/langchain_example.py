@@ -7,11 +7,21 @@ Este script demuestra cómo usar el adapter de LangChain para:
 - Usar el cliente con cadenas de LangChain
 """
 
+import logging
 import os
 from dotenv import load_dotenv
 from llm_arch_sdk.adapters.lang_adapter import LangChainAdapter
 from langchain_core.messages import SystemMessage, HumanMessage
 
+# Configurar logging para ver los logs de Langfuse
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# Cargar variables de entorno desde el archivo .env (forzado)
+_env_path = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(dotenv_path=_env_path, override=True)
 
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()

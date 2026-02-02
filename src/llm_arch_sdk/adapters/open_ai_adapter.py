@@ -12,6 +12,27 @@ load_dotenv()
 
 logger = logging.getLogger("llm.sdk.adapters.openai")
 
+
+class _StripKwargsWrapper:
+    def __init__(self, target):
+        self._target = target
+
+    def create(self, *args, **kwargs):
+        kwargs.pop("trace_metadata", None)
+        kwargs.pop("trace_tags", None)
+        return self._target.create(*args, **kwargs)
+
+
+class _OpenAILangfuseClientWrapper:
+    def __init__(self, client: OpenAI):
+        self._client = client
+        self.chat = type("_Chat", (), {"completions": _StripKwargsWrapper(client.chat.completions)})()
+        self.completions = _StripKwargsWrapper(client.completions)
+        self.embeddings = _StripKwargsWrapper(client.embeddings)
+
+    def __getattr__(self, name: str):
+        return getattr(self._client, name)
+
 class OpenAIAdapter(BaseLLMAdapter):
     """
     Adapter enterprise para instanciar un cliente OpenAI
@@ -50,13 +71,27 @@ class OpenAIAdapter(BaseLLMAdapter):
         """
         if not self._openai_client:
             logger.info("Inicializando cliente OpenAI")
-            self._openai_client =  OpenAI(
-                base_url=self.base_url,
-                api_key="unused", 
-                http_client=self._http_client,
-                default_headers=AuthHttpClientFactory._default_headers(),
-                **self.client_kwargs
-            )
+            try:
+                from langfuse.openai import OpenAI as LangfuseOpenAI
+                logger.info("Langfuse OpenAI instrumentation enabled (langfuse)")
+                client = LangfuseOpenAI(
+                    base_url=self.base_url,
+                    api_key="unused",
+                    http_client=self._http_client,
+                    default_headers=AuthHttpClientFactory._default_headers(),
+                    **self.client_kwargs,
+                )
+                # Strip custom kwargs like trace_metadata/trace_tags
+                self._openai_client = _OpenAILangfuseClientWrapper(client)
+            except Exception as exc:
+                logger.warning("Langfuse OpenAI integration failed, using plain OpenAI client: %s", exc)
+                self._openai_client = OpenAI(
+                    base_url=self.base_url,
+                    api_key="unused",
+                    http_client=self._http_client,
+                    default_headers=AuthHttpClientFactory._default_headers(),
+                    **self.client_kwargs,
+                )
 
         return self._openai_client
 

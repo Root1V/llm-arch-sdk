@@ -8,17 +8,33 @@ Este script demuestra cómo usar el adapter de OpenAI para:
 - Embeddings
 """
 
+import logging
 import os
 from dotenv import load_dotenv
 from llm_arch_sdk.adapters.open_ai_adapter import OpenAIAdapter
 
-# Cargar variables de entorno desde el archivo .env
-load_dotenv()
+# Configurar logging para ver los logs de Langfuse
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# Reducir warnings del wrapper Langfuse
+logging.getLogger("langfuse").setLevel(logging.ERROR)
+
+# Cargar variables de entorno desde el archivo .env (forzado)
+_env_path = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(dotenv_path=_env_path, override=True)
 
 def example_chat_completions(client):
     # 1. Probar Chat Completions
     print("\n📝 Probando Chat Completions...")
     try:
+        metadata = {
+            "flow": "openai_example",
+            "endpoint": "/v1/chat/completions",
+            "model": "gpt-3.5-turbo",
+        }
         chat_response = client.chat.completions.create(
             model="gpt-3.5-turbo",  
             messages=[
@@ -26,7 +42,8 @@ def example_chat_completions(client):
                 {"role": "user", "content": "Hola, ¿cuál es la capital de Francia?"}
             ],
             max_tokens=100,
-            temperature=0.7
+            temperature=0.7,
+            metadata=metadata,
         )
         print("✅ Chat completion exitoso:")
         print(f"   Respuesta: {chat_response.choices[0].message.content}")
@@ -39,11 +56,17 @@ def example_text_completions(client):
     # 2. Probar Text Completions
     print("\n✍️  Probando Text Completions...")
     try:
+        metadata = {
+            "flow": "openai_example",
+            "endpoint": "/v1/completions",
+            "model": "text-davinci-003",
+        }
         completion_response = client.completions.create(
             model="text-davinci-003", 
             prompt="Escribe un poema corto sobre la inteligencia artificial.",
             max_tokens=50,
-            temperature=0.7
+            temperature=0.7,
+            metadata=metadata,
         )
         print("✅ Text completion exitoso:")
         print(f"   Respuesta: {completion_response.choices[0].text.strip()}")
@@ -56,9 +79,15 @@ def example_embeddings(client):
     # 3. Probar Embeddings
     print("\n🧠 Probando Embeddings...")
     try:
+        metadata = {
+            "flow": "openai_example",
+            "endpoint": "/v1/embeddings",
+            "model": "text-embedding-ada-002",
+        }
         embedding_response = client.embeddings.create(
             model="text-embedding-ada-002", 
-            input=["Inteligencia artificial", "Aprendizaje automático"]
+            input=["Inteligencia artificial", "Aprendizaje automático"],
+            metadata=metadata,
         )
         print("✅ Embeddings exitosos:")
         for i, embedding in enumerate(embedding_response.data):

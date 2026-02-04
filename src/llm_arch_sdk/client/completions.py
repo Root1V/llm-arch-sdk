@@ -1,7 +1,7 @@
 
 import logging
 from typing import Optional
-from ..observability.langfuse_client import start_trace, record_generation, record_event
+from ..observability.langfuse_client import start_trace, record_generation, record_event, set_active_trace, clear_active_trace
 
 from .base_client import BaseClient
 from ..models.completion import CompletionResult
@@ -40,6 +40,7 @@ class Completions:
             metadata=metadata,
             tags=trace_tags,
         )
+        set_active_trace(trace)
 
         try:
             raw = self._client._request(
@@ -63,3 +64,5 @@ class Completions:
         except Exception as exc:
             record_event(trace, name="llm.client.completions.error", input={"error": str(exc)})
             raise
+        finally:
+            clear_active_trace()

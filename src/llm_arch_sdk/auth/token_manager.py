@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 from ..transport.circuit_breaker import CircuitBreaker
 from ..transport.http_client_factory import HttpClientFactory
+from ..observability.langfuse_client import get_active_trace, record_step
 
 load_dotenv()
 
@@ -41,11 +42,32 @@ class TokenManager(httpx.Auth):
             with self._lock:
                 if not self.token:
                     logger.info("Token no presente, login inicial")
+                    record_step(
+                        get_active_trace(),
+                        "llm.auth.login.start",
+                        input={"reason": "missing_token"},
+                    )
                     self.token = self._login()
+                    record_step(
+                        get_active_trace(),
+                        "llm.auth.login.success",
+                        input={"reason": "missing_token"},
+                    )
+        else:
+            record_step(
+                get_active_trace(),
+                "llm.auth.token.cached",
+                input={"reason": "token_present"},
+            )
 
         # 2 Adjuntar token
         request.headers["Authorization"] = f"Bearer {self.token}"
         logger.debug("Enviando request con token %s", request.headers["Authorization"])
+        record_step(
+            get_active_trace(),
+            "llm.auth.attach_token",
+            input={"has_token": True},
+        )
 
         # 3️ Enviar request
         response = yield request
@@ -53,6 +75,11 @@ class TokenManager(httpx.Auth):
         # 4️ Retry UNA vez si token expiró
         if response.status_code == 401 and not request.headers.get("X-Retry"):
             logger.warning("401 recibido, refrescando token")
+            record_step(
+                get_active_trace(),
+                "llm.auth.login.refresh",
+                input={"status_code": 401},
+            )
 
             with self._lock:
                 self.token = self._login()
@@ -60,6 +87,11 @@ class TokenManager(httpx.Auth):
             request.headers["Authorization"] = f"Bearer {self.token}"
             request.headers["X-Retry"] = "1"
             logger.debug("Reintentando request con nuevo token", request.headers["Authorization"])
+            record_step(
+                get_active_trace(),
+                "llm.auth.login.success",
+                input={"reason": "refresh"},
+            )
 
             yield request
 

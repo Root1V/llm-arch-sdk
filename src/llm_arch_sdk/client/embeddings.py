@@ -1,7 +1,7 @@
 
 import logging
 from typing import Optional
-from ..observability.langfuse_client import start_trace, record_event
+from ..observability.langfuse_client import start_trace, record_event, set_active_trace, clear_active_trace
 
 from .base_client import BaseClient
 
@@ -31,6 +31,7 @@ class Embeddings:
             metadata=metadata,
             tags=trace_tags,
         )
+        set_active_trace(trace)
 
         try:
             return self._client._request(
@@ -41,3 +42,5 @@ class Embeddings:
         except Exception as exc:
             record_event(trace, name="llm.client.embeddings.error", input={"error": str(exc)})
             raise
+        finally:
+            clear_active_trace()

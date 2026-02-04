@@ -10,10 +10,11 @@ import logging
 import os
 from dotenv import load_dotenv
 from llm_arch_sdk.adapters.llama_adapter import LlamaAdapter
+from llm_arch_sdk.observability.langfuse_client import start_trace, record_event, set_active_trace, clear_active_trace
 
 # Configurar logging para ver los logs de Langfuse
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
@@ -23,13 +24,23 @@ load_dotenv(dotenv_path=_env_path, override=True)
 
 def example_health(client):
     print("\n🔍 Probando Health Check...")
+    trace = start_trace(
+        name="llm.client.health",
+        input={"endpoint": "/health"},
+        metadata={"flow": example_health.__name__, "endpoint": "/health"},
+        tags=["example", "health", "basic_usage"],
+    )
+    set_active_trace(trace)
     try:
         health_response = client.health()
         print("✅ Health check exitoso:")
         print(f"   Estado: {health_response.status}")
         print(f"   Versión del servidor: {health_response.version}")
     except Exception as e:
+        record_event(trace, name="llm.client.health.error", input={"error": str(e)})
         print(f"⚠️  Health check falló: {e}")
+    finally:
+        clear_active_trace()
         
 def example_chat_completions(client):
     print("\n📝 Probando Chat Completions...")

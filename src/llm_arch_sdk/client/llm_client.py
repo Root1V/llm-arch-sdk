@@ -6,6 +6,7 @@ from .chat_completions import ChatCompletions
 from .completions import Completions
 from .embeddings import Embeddings
 from ..transport.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
+from ..observability.langfuse_client import get_active_trace, record_step
 
 logger = logging.getLogger("llm.sdk.client")
 
@@ -35,6 +36,11 @@ class LlmClient(BaseClient):
             raise CircuitBreakerOpen("Circuit abierto para llama-server")
         
         try:
+            record_step(
+                get_active_trace(),
+                "llm.http.request.start",
+                input={"method": method, "endpoint": endpoint},
+            )
             resp = self._http_client.request(
                 method,
                 f"{self.base_url}{endpoint}",
@@ -46,14 +52,29 @@ class LlmClient(BaseClient):
 
             self._circuit.record_success()
             resp.raise_for_status()
+            record_step(
+                get_active_trace(),
+                "llm.http.request.success",
+                input={"status_code": resp.status_code, "endpoint": endpoint},
+            )
             return resp.json()
             
         except httpx.HTTPStatusError as e:
             self._circuit.record_failure()
+            record_step(
+                get_active_trace(),
+                "llm.http.request.error",
+                input={"status_code": e.response.status_code, "endpoint": endpoint},
+            )
             raise LlmAPIError(f"HTTP {e.response.status_code}: {e.response.text}") from e
         
         except (httpx.TimeoutException, httpx.RequestError) as e:
             self._circuit.record_failure()
+            record_step(
+                get_active_trace(),
+                "llm.http.request.error",
+                input={"error": str(e), "endpoint": endpoint},
+            )
             raise LlmAPIError(str(e)) from e
         
     def health(self):

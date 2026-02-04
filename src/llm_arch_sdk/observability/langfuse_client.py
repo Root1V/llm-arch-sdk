@@ -2,24 +2,25 @@
 
 import logging
 import os
+from contextvars import ContextVar
 from importlib import metadata
 from typing import Any, Dict, Optional
 
 logger = logging.getLogger("llm.sdk.observability.langfuse")
 
-# Try to import Langfuse, handling compatibility issues with Python 3.14
 _LANGFUSE_IMPORT_ERROR = None
+_LANGFUSE_CLIENT = None
+_LANGFUSE_INIT_SENT = False
+_ACTIVE_TRACE: ContextVar[Optional[Any]] = ContextVar("llm_sdk_active_trace", default=None)
+_ACTIVE_TRACE_GLOBAL: Optional[Any] = None
+
 try:
     from langfuse import Langfuse
-except Exception as e:  # pragma: no cover - optional dependency
+except Exception as e:  
     _LANGFUSE_IMPORT_ERROR = e
     Langfuse = None
 
-_LANGFUSE_CLIENT = None
-_LANGFUSE_INIT_SENT = False
-
-
-def _record_sdk_init(client: "Langfuse", host: str) -> None:
+def _record_sdk_init(client: "Langfuse", host: str) -> None: # type: ignore
     """Emit a one-time trace to confirm Langfuse connectivity."""
     global _LANGFUSE_INIT_SENT
 
@@ -33,9 +34,9 @@ def _record_sdk_init(client: "Langfuse", host: str) -> None:
 
     try:
         logger.info("📤 Sending SDK initialization span to Langfuse...")
-        # Langfuse 3.x - create a span to confirm connectivity
+
         span = client.start_span(
-            name="llm.sdk.init",
+            name="llm.sdk.init.observability",
             input={"status": "startup", "version": version},
             metadata={"sdk_version": version, "langfuse_host": host},
         )
@@ -58,8 +59,7 @@ def _record_sdk_init(client: "Langfuse", host: str) -> None:
         import traceback
         logger.debug("Traceback: %s", traceback.format_exc())
 
-
-def get_langfuse() -> Optional["Langfuse"]:
+def get_langfuse() -> Optional["Langfuse"]: # type: ignore
     """Return a Langfuse client if configured, otherwise None."""
     global _LANGFUSE_CLIENT
 
@@ -77,10 +77,11 @@ def get_langfuse() -> Optional["Langfuse"]:
     secret_key = os.getenv("LANGFUSE_SECRET_KEY")
     host = os.getenv("LANGFUSE_BASE_URL")
 
-    if not public_key or not secret_key:
+    if not public_key or not secret_key or not host:
         logger.warning("⚠️  Langfuse not configured - missing credentials")
         logger.warning("   LANGFUSE_PUBLIC_KEY: %s", "✓ configured" if public_key else "✗ missing")
         logger.warning("   LANGFUSE_SECRET_KEY: %s", "✓ configured" if secret_key else "✗ missing")
+        logger.warning("   LANGFUSE_BASE_URL: %s", "✓ configured" if host else "✗ missing")
         logger.warning("   Add these to examples/.env to enable Langfuse tracing")
         return None
 
@@ -105,7 +106,6 @@ def get_langfuse() -> Optional["Langfuse"]:
 
     return _LANGFUSE_CLIENT
 
-
 def start_trace(
     name: str,
     input: Optional[Dict[str, Any]] = None,
@@ -122,11 +122,40 @@ def start_trace(
         meta = metadata or {}
         if tags:
             meta = {**meta, "tags": tags}
-        span = client.start_span(
-            name=name,
-            input=input,
-            metadata=meta,
-        )
+        if hasattr(client, "trace"):
+            try:
+                span = client.trace(
+                    name=name,
+                    input=input,
+                    metadata=meta,
+                    tags=tags,
+                )
+            except TypeError:
+                span = client.trace(
+                    name=name,
+                    input=input,
+                    metadata=meta,
+                )
+        elif hasattr(client, "start_trace"):
+            try:
+                span = client.start_trace(
+                    name=name,
+                    input=input,
+                    metadata=meta,
+                    tags=tags,
+                )
+            except TypeError:
+                span = client.start_trace(
+                    name=name,
+                    input=input,
+                    metadata=meta,
+                )
+        else:
+            span = client.start_span(
+                name=name,
+                input=input,
+                metadata=meta,
+            )
         
         if span:
             logger.debug("   ✓ Span created: %s", span.id if hasattr(span, 'id') else "ok")
@@ -137,6 +166,25 @@ def start_trace(
     except Exception as exc:
         logger.error("❌ Failed to create span '%s': %s", name, exc)
         return None
+
+
+def set_active_trace(trace) -> None:
+    global _ACTIVE_TRACE_GLOBAL
+    _ACTIVE_TRACE.set(trace)
+    _ACTIVE_TRACE_GLOBAL = trace
+
+
+def clear_active_trace() -> None:
+    global _ACTIVE_TRACE_GLOBAL
+    _ACTIVE_TRACE.set(None)
+    _ACTIVE_TRACE_GLOBAL = None
+
+
+def get_active_trace():
+    trace = _ACTIVE_TRACE.get()
+    if trace is None:
+        return _ACTIVE_TRACE_GLOBAL
+    return trace
 
 
 def record_generation(
@@ -202,3 +250,42 @@ def record_event(trace, name: str, input: Optional[Dict[str, Any]] = None):
             logger.warning("   ⚠️  Span does not have update method")
     except Exception as exc:
         logger.error("❌ Failed to record event '%s': %s", name, exc)
+
+
+def record_step(trace, name: str, input: Optional[Dict[str, Any]] = None, metadata: Optional[Dict[str, Any]] = None):
+    """Record a non-terminal step on a span without ending it."""
+    if not trace:
+        return
+
+    try:
+        if isinstance(trace, dict) and "trace_id" in trace:
+            client = get_langfuse()
+            if not client:
+                return
+            step = client.start_span(
+                trace_context=trace,
+                name=name,
+                input=input,
+                metadata=metadata,
+            )
+            if step and hasattr(step, "end"):
+                step.end()
+            return
+
+        if hasattr(trace, "start_span"):
+            step = trace.start_span(
+                name=name,
+                input=input,
+                metadata=metadata,
+            )
+            if step and hasattr(step, "end"):
+                step.end()
+            return
+
+        if hasattr(trace, "update"):
+            trace.update(
+                output={"event": name, "details": input},
+                metadata=metadata,
+            )
+    except Exception as exc:
+        logger.error("❌ Failed to record step '%s': %s", name, exc)

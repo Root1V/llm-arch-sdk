@@ -12,7 +12,7 @@ class TestOpenAIAdapter:
         mock_http_client = Mock()
         mock_auth_factory.create.return_value = mock_http_client
 
-        adapter = OpenAIAdapter()
+        adapter = OpenAIAdapter(use_langfuse=False)
 
         assert adapter.base_url == 'https://api.openai.com'
         assert adapter.timeout == 60.0
@@ -26,7 +26,7 @@ class TestOpenAIAdapter:
             mock_http_client = Mock()
             mock_auth_factory.create.return_value = mock_http_client
 
-            adapter = OpenAIAdapter(base_url="https://custom.openai.com", timeout=30.0)
+            adapter = OpenAIAdapter(base_url="https://custom.openai.com", timeout=30.0, use_langfuse=False)
 
             assert adapter.base_url == "https://custom.openai.com"
             assert adapter.timeout == 30.0
@@ -59,7 +59,7 @@ class TestOpenAIAdapter:
         mock_openai_instance = Mock(spec=OpenAI)
         mock_openai_class.return_value = mock_openai_instance
 
-        adapter = OpenAIAdapter()
+        adapter = OpenAIAdapter(use_langfuse=False)
         client1 = adapter.client()
         client2 = adapter.client()
 
@@ -82,7 +82,7 @@ class TestOpenAIAdapter:
         mock_http_client = Mock()
         mock_auth_factory.create.return_value = mock_http_client
 
-        adapter = OpenAIAdapter(base_url="https://test.api.com", timeout=45.0)
+        adapter = OpenAIAdapter(base_url="https://test.api.com", timeout=45.0, use_langfuse=False)
         adapter.client()
 
         mock_openai_class.assert_called_once_with(

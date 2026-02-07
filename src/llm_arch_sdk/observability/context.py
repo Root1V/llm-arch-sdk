@@ -8,6 +8,9 @@ def new_session_id() -> str:
 def new_job_id() -> str:
     return f"job-{uuid.uuid4()}"
 
+def new_trace_id() -> str:
+    return f"trace-{uuid.uuid4()}"
+
 def _new_short_name(length: int = 8) -> str:
     alphabet = string.ascii_lowercase + string.digits
     return "".join(secrets.choice(alphabet) for _ in range(length))

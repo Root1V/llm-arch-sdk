@@ -7,9 +7,11 @@ from dotenv import load_dotenv
 
 from ..transport.circuit_breaker import CircuitBreaker
 from ..transport.http_client_factory import HttpClientFactory
-from ..observability.langfuse_client import get_active_trace, record_step
+from langfuse import observe, get_client
 
 load_dotenv()
+
+langfuse = get_client()
 
 logger = logging.getLogger("llm.sdk.auth.token_manager")
 
@@ -36,37 +38,31 @@ class TokenManager(httpx.Auth):
             reset_timeout=30,
         )
 
+    @observe(
+        name="llm.auth.flow",
+        capture_input=False,
+        capture_output=False,
+    )
     def auth_flow(self, request):
         # 1 Asegurar token (thread-safe)
         if not self.token:
             with self._lock:
                 if not self.token:
-                    logger.info("Token no presente, login inicial")
-                    record_step(
-                        get_active_trace(),
-                        "llm.auth.login.start",
-                        input={"reason": "missing_token"},
-                    )
+                    logger.info("Token no presente, login inicial")  
+                    langfuse.update_current_span(
+                        metadata={"auth.reason": "missing_token"}
+                    )                  
                     self.token = self._login()
-                    record_step(
-                        get_active_trace(),
-                        "llm.auth.login.success",
-                        input={"reason": "missing_token"},
-                    )
         else:
-            record_step(
-                get_active_trace(),
-                "llm.auth.token.cached",
-                input={"reason": "token_present"},
+            langfuse.update_current_span(
+                metadata={"auth.reason": "cached_token"}
             )
 
         # 2 Adjuntar token
         request.headers["Authorization"] = f"Bearer {self.token}"
         logger.debug("Enviando request con token %s", request.headers["Authorization"])
-        record_step(
-            get_active_trace(),
-            "llm.auth.attach_token",
-            input={"has_token": True},
+        langfuse.update_current_span(
+            metadata={"auth.token_attached": True}
         )
 
         # 3️ Enviar request
@@ -75,10 +71,9 @@ class TokenManager(httpx.Auth):
         # 4️ Retry UNA vez si token expiró
         if response.status_code == 401 and not request.headers.get("X-Retry"):
             logger.warning("401 recibido, refrescando token")
-            record_step(
-                get_active_trace(),
-                "llm.auth.login.refresh",
-                input={"status_code": 401},
+
+            langfuse.update_current_span(
+                metadata={"auth.reason": "token_expired"}
             )
 
             with self._lock:
@@ -87,20 +82,26 @@ class TokenManager(httpx.Auth):
             request.headers["Authorization"] = f"Bearer {self.token}"
             request.headers["X-Retry"] = "1"
             logger.debug("Reintentando request con nuevo token", request.headers["Authorization"])
-            record_step(
-                get_active_trace(),
-                "llm.auth.login.success",
-                input={"reason": "refresh"},
-            )
 
             yield request
 
+    @observe(
+        name="llm.auth.login",
+        capture_input=False,
+        capture_output=False,
+    )
     def _login(self) -> str:
         # Circuit breaker: ¿se permite intentar login?
         if not self._circuit.allow_request():
+            langfuse.update_current_span(
+                metadata={"circuit": self._circuit._state.value, "blocked": True}
+            )
             raise AuthError("Circuit breaker abierto: login bloqueado")
 
         try:
+            langfuse.update_current_span(
+                metadata={"login.endpoint": "/llm/login"}
+            )
             resp = self._login_client.post(
                 f"{self.base_url}/llm/login",
                 auth=(self.username, self.password),
@@ -119,11 +120,17 @@ class TokenManager(httpx.Auth):
         except httpx.TimeoutException as e:
             self._circuit.record_failure()
             logger.error("Timeout durante login")
+            langfuse.update_current_span(
+                metadata={"circuit": self._circuit._state.value, "error": type(e).__name__}
+            )
             raise AuthError("Timeout durante login") from e
 
         except httpx.RequestError as e:
             self._circuit.record_failure()
             logger.error("Error de conexión durante login")
+            langfuse.update_current_span(
+                metadata={"circuit": self._circuit._state.value, "error": type(e).__name__}
+            )
             raise AuthError(f"Error de conexión durante login: {e}") from e
 
         except httpx.HTTPStatusError as e:
@@ -132,6 +139,9 @@ class TokenManager(httpx.Auth):
                 "Error HTTP durante login",
                 extra={"status_code": e.response.status_code},
             )
+            langfuse.update_current_span(
+                metadata={"circuit": self._circuit._state.value, "error": type(e).__name__}
+            )
             raise AuthError(
                 f"Error HTTP durante login: {e.response.status_code}"
             ) from e
@@ -139,6 +149,9 @@ class TokenManager(httpx.Auth):
         except Exception as e:
             self._circuit.record_failure()
             logger.exception("Error inesperado durante login")
+            langfuse.update_current_span(
+                metadata={"circuit": self._circuit._state.value, "error": type(e).__name__}
+            )
             raise AuthError("Error inesperado durante login") from e
     
     def _validate(self):

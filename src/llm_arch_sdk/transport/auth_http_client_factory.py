@@ -3,12 +3,18 @@ import logging
 from typing import Optional
 from ..auth.token_manager import TokenManager
 from .http_client_factory import HttpClientFactory
+from langfuse import observe
 
 logger = logging.getLogger("llm.sdk.transport.auth_http_client_factory")
 
 class AuthHttpClientFactory(HttpClientFactory):
 
     @classmethod
+    @observe(
+        name="llm.transport.http_client_factory",
+        capture_input=False,
+        capture_output=False,
+    )
     def create(
         cls,
         auth: Optional[TokenManager] = None,

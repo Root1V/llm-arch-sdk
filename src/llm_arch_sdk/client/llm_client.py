@@ -41,7 +41,7 @@ class LlmClient(BaseClient):
     def _request(self, method: str, endpoint: str, **kwargs):
         if not self._circuit.allow_request():
             langfuse.update_current_span(
-                metadata={"circuit": "open", "blocked": True}
+                metadata={"circuit": self._circuit._state.value, "blocked": True}
             )
             
             raise CircuitBreakerOpen("Circuit abierto para llama-server")

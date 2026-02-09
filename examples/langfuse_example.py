@@ -3,8 +3,16 @@ from langfuse import Langfuse, observe, propagate_attributes, get_client
 from dotenv import load_dotenv
 from llm_arch_sdk.observability.context import new_session_id, new_user_id
 from llm_arch_sdk.observability.masking import masking_email_and_phone
+from llm_arch_sdk.adapters.llama_adapter import LlamaAdapter
+import logging
 
 load_dotenv()
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
 
 public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
 secret_key = os.getenv("LANGFUSE_SECRET_KEY")
@@ -34,11 +42,22 @@ def invoke_llm(data, langfuse_client):
     print(f"Invoking LLM with data: {data}")
     
     langfuse_client.update_current_span(level="ERROR", status_message="Es es el mensaje de Error" ) 
-    return "Please contact John at john.doe@example.com or call 555123457."
+    
+    client = LlamaAdapter().client()
+    # Simulate an LLM response (replace with actual client call)
+    completion_response = client.completions.create(
+            model="llama-7b", 
+            prompt="Escribe un poema corto sobre la inteligencia artificial.",
+            max_tokens=30,
+            temperature=0.7,
+    )
+    
+    return completion_response.content.strip()
 
         
 
 if __name__ == "__main__":
     # Simulate receiving a request
     request = {"endpoint": "/api/data", "method": "GET", "payload": {"key": "value"} }
-    process_request(request)
+    resp = process_request(request)
+    print(f"LLM Response: {resp}")

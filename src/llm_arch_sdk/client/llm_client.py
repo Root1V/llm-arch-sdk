@@ -6,7 +6,9 @@ from .chat_completions import ChatCompletions
 from .completions import Completions
 from .embeddings import Embeddings
 from ..transport.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
-from ..observability.langfuse_client import get_active_trace, record_step
+from langfuse import observe, get_client
+
+langfuse = get_client()
 
 logger = logging.getLogger("llm.sdk.client")
 
@@ -30,17 +32,22 @@ class LlmClient(BaseClient):
         self.completions = Completions(self)
         self.chat = ChatCompletions(self)
         self.embeddings = Embeddings(self)
-
+    
+    @observe(
+        name="llama.client.request",
+        capture_input=False,
+        capture_output=False,
+    )
     def _request(self, method: str, endpoint: str, **kwargs):
         if not self._circuit.allow_request():
+            langfuse.update_current_span(
+                metadata={"circuit": "open", "blocked": True}
+            )
+            
             raise CircuitBreakerOpen("Circuit abierto para llama-server")
         
         try:
-            record_step(
-                get_active_trace(),
-                "llm.http.request.start",
-                input={"method": method, "endpoint": endpoint},
-            )
+            
             resp = self._http_client.request(
                 method,
                 f"{self.base_url}{endpoint}",
@@ -52,31 +59,44 @@ class LlmClient(BaseClient):
 
             self._circuit.record_success()
             resp.raise_for_status()
-            record_step(
-                get_active_trace(),
-                "llm.http.request.success",
-                input={"status_code": resp.status_code, "endpoint": endpoint},
+            
+            # no capturamos body ni headers
+            langfuse.update_current_span(
+                metadata={
+                    "status_code": resp.status_code,
+                    "endpoint": endpoint,
+                    "method": method,
+                }
             )
+            
             return resp.json()
             
         except httpx.HTTPStatusError as e:
             self._circuit.record_failure()
-            record_step(
-                get_active_trace(),
-                "llm.http.request.error",
-                input={"status_code": e.response.status_code, "endpoint": endpoint},
+            
+            langfuse.update_current_span(
+                metadata={
+                    "status_code": e.response.status_code,
+                    "endpoint": endpoint,
+                }
             )
             raise LlmAPIError(f"HTTP {e.response.status_code}: {e.response.text}") from e
         
         except (httpx.TimeoutException, httpx.RequestError) as e:
             self._circuit.record_failure()
-            record_step(
-                get_active_trace(),
-                "llm.http.request.error",
-                input={"error": str(e), "endpoint": endpoint},
+            langfuse.update_current_span(
+                metadata={
+                    "endpoint": endpoint,
+                    "error_type": type(e).__name__,
+                }
             )
             raise LlmAPIError(str(e)) from e
-        
+    
+    @observe(
+        name="llama.client.health",
+        capture_input=False,
+        capture_output=False,
+    )
     def health(self):
         return self._request("GET", "/health")
     

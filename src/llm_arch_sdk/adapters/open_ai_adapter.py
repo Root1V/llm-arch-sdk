@@ -28,12 +28,10 @@ class OpenAIAdapter(BaseLLMAdapter):
         self,
         base_url: str = None,
         timeout: float = 60.0,
-        use_langfuse: bool = True,
         **kwargs
     ):
         self.base_url = base_url or os.environ.get("LLM_BASE_URL")
         self.timeout = timeout
-        self.use_langfuse = use_langfuse
         self.client_kwargs = kwargs
 
         self._validate_config()
@@ -54,35 +52,13 @@ class OpenAIAdapter(BaseLLMAdapter):
         if not self._openai_client:
             logger.info("Inicializando cliente OpenAI")
             
-            if self.use_langfuse:
-                try:
-                    from langfuse.openai import OpenAI as LangfuseOpenAI
-                    
-                    logger.info("Langfuse OpenAI instrumentation enabled (langfuse)")
-                    self._openai_client = LangfuseOpenAI(
-                        base_url=self.base_url,
-                        api_key="unused",
-                        http_client=self._http_client,
-                        default_headers=AuthHttpClientFactory._default_headers(),
-                        **self.client_kwargs,
-                    )
-                except Exception as exc:
-                    logger.warning("Langfuse OpenAI integration failed, using plain OpenAI client: %s", exc)
-                    self._openai_client = OpenAI(
-                        base_url=self.base_url,
-                        api_key="unused",
-                        http_client=self._http_client,
-                        default_headers=AuthHttpClientFactory._default_headers(),
-                        **self.client_kwargs,
-                    )
-            else:
-                self._openai_client = OpenAI(
-                    base_url=self.base_url,
-                    api_key="unused",
-                    http_client=self._http_client,
-                    default_headers=AuthHttpClientFactory._default_headers(),
-                    **self.client_kwargs,
-                )
+            self._openai_client = OpenAI(
+                base_url=self.base_url,
+                api_key="unused",
+                http_client=self._http_client,
+                default_headers=AuthHttpClientFactory._default_headers(),
+                **self.client_kwargs,
+            )
 
         return self._openai_client
 

@@ -1,7 +1,6 @@
 
 import logging
 from typing import Optional
-from ..observability.langfuse_client import start_trace, record_event, set_active_trace, clear_active_trace
 
 from .base_client import BaseClient
 
@@ -21,17 +20,6 @@ class Embeddings:
     ):
         logger.debug("llm.client.embeddings.create model=%s input=%s", model, input)
         payload = {"model": model, "input": input}
-        metadata = {"model": model, "endpoint": "/v1/embeddings"}
-        if trace_metadata:
-            metadata = {**metadata, **trace_metadata}
-
-        trace = start_trace(
-            name="llm.client.embeddings.create",
-            input=payload,
-            metadata=metadata,
-            tags=trace_tags,
-        )
-        set_active_trace(trace)
 
         try:
             return self._client._request(
@@ -40,7 +28,6 @@ class Embeddings:
                 json=payload,
             )
         except Exception as exc:
-            record_event(trace, name="llm.client.embeddings.error", input={"error": str(exc)})
             raise
         finally:
-            clear_active_trace()
+            pass

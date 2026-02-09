@@ -52,6 +52,13 @@ def invoke_llm(data, langfuse_client):
             temperature=0.7,
     )
     
+    completion_response = client.completions.create(
+            model="Qwen-7b", 
+            prompt="Escribe un haiku corto sobre la inteligencia artificial.",
+            max_tokens=30,
+            temperature=0.7,
+    )
+    
     return completion_response.content.strip()
 
         

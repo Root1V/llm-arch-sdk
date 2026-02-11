@@ -19,7 +19,7 @@ class CircuitBreaker:
     Circuit Breaker con estados:
     """
 
-    def __init__(self, failure_threshold=3, reset_timeout=30, half_open_success: int = 1):
+    def __init__(self, failure_threshold: int, reset_timeout: int, half_open_success: int):
 
         self.failure_threshold = failure_threshold
         self.reset_timeout = reset_timeout

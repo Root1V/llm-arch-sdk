@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from ..transport.circuit_breaker import CircuitBreaker
 from ..transport.http_client_factory import HttpClientFactory
 from langfuse import observe, get_client
+from ..config.settings import _sdk_settings
+
 
 load_dotenv()
 
@@ -20,10 +22,10 @@ class AuthError(Exception):
 
 
 class TokenManager(httpx.Auth):
-    def __init__(self, timeout: float = 10.0    ):
-        self.base_url = os.environ.get("LLM_BASE_URL")
-        self.username = os.environ.get("LLM_USERNAME")
-        self.password = os.environ.get("LLM_PASSWORD")
+    def __init__(self, timeout: float):
+        self.base_url = _sdk_settings.llm.base_url
+        self.username = _sdk_settings.llm.username
+        self.password = _sdk_settings.llm.password
         self.timeout = timeout
 
         self._validate()
@@ -34,8 +36,8 @@ class TokenManager(httpx.Auth):
         self._login_client = HttpClientFactory.create(timeout=self.timeout)
         
         self._circuit = CircuitBreaker(
-            failure_threshold=3,
-            reset_timeout=30,
+            failure_threshold= _sdk_settings.circuit_breaker.failure_threshold,
+            reset_timeout=_sdk_settings.circuit_breaker.reset_timeout,
         )
 
     @observe(

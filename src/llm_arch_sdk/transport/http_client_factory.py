@@ -2,6 +2,8 @@ from typing import Dict, Mapping, Optional
 import httpx
 import logging
 
+from ..config.settings import _sdk_settings
+
 logger = logging.getLogger("llm.sdk.transport.http_client_factory")
 
 class HttpClientFactory:
@@ -10,7 +12,7 @@ class HttpClientFactory:
     def _default_headers(cls, extra: Optional[Mapping[str, str]] = None) -> Dict[str, str]:
         headers = {
             "Accept": "application/json",
-            "User-Agent": "SDK-Architecture-PE/LLM-Client/1.0",
+            "User-Agent": _sdk_settings.identity.user_agent,
         }
         if extra:
             headers.update(extra)
@@ -20,7 +22,7 @@ class HttpClientFactory:
     @classmethod
     def create(
         cls,
-        timeout: float = 60.0,
+        timeout: float,
         extra_headers: dict = None,
     ) -> httpx.Client:
 

@@ -1,19 +1,67 @@
-import secrets
-import string
-import uuid
+from typing import Dict, Optional, Any
+import logging
 
-def new_session_id() -> str:
-    return f"session-{uuid.uuid4()}"
+from .bootstrap import get_langfuse_client
+from .helpers import new_session_id
 
-def new_job_id() -> str:
-    return f"job-{uuid.uuid4()}"
+logger = logging.getLogger("llm.sdk.observability.context")
 
-def _new_short_name(length: int = 8) -> str:
-    alphabet = string.ascii_lowercase + string.digits
-    return "".join(secrets.choice(alphabet) for _ in range(length))
+class ObservabilityContext:
+    """
+    Punto único para:
+    - asegurar session_id
+    - actualizar metadata/tags del span actual
+    - no exponer langfuse al resto del SDK
+    """
 
-def new_user_id() -> str:
-    return f"user-{_new_short_name()}"
+    def __init__(self):
+        self._client = get_langfuse_client()
 
-def new_agent_id() -> str:
-    return f"agent-{_new_short_name()}"
+    def update(
+        self,
+        *,
+        session_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+        tags: Optional[list[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Optional[str]:
+        """
+        Garantiza que exista un contexto mínimo de observabilidad
+        y actualiza el span activo creado por @observe.
+
+        Devuelve el session_id efectivo.
+        """
+
+        if not self._client:
+            return session_id
+
+        try:
+            sid = session_id or new_session_id()
+
+            payload: Dict[str, Any] = {
+                "session_id": sid,
+            }
+
+            if user_id:
+                payload["user_id"] = user_id
+
+            if metadata:
+                payload["metadata"] = metadata
+
+            if tags:
+                payload["tags"] = tags
+
+            # API oficial v3
+            self._client.update_current_trace(**payload)
+
+            return sid
+
+        except Exception as exc:
+            logger.debug("Langfuse update_current_trace failed: %s", exc)
+            return session_id
+
+
+# singleton liviano
+obs = ObservabilityContext()
+
+

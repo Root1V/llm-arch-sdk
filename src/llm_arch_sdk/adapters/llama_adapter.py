@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from .base import BaseLLMAdapter
 from ..client.llm_client import LlmClient
 from ..transport.auth_http_client_factory import AuthHttpClientFactory
+from ..config.settings import _sdk_settings
 from langfuse import observe, get_client
 
 load_dotenv()
@@ -31,7 +32,7 @@ class LlamaAdapter(BaseLLMAdapter):
         timeout: float = 60.0,
         **kwargs
     ):
-        self.base_url = base_url or os.environ.get("LLM_BASE_URL")
+        self.base_url = base_url or _sdk_settings.llm.base_url
         self.timeout = timeout
         self.client_kwargs = kwargs
 

@@ -1,7 +1,7 @@
 import os
 from langfuse import Langfuse, observe, propagate_attributes, get_client
 from dotenv import load_dotenv
-from llm_arch_sdk.observability.context import new_session_id, new_user_id
+from llm_arch_sdk.observability.helpers import new_session_id, new_user_id
 from llm_arch_sdk.observability.masking import masking_email_and_phone
 from llm_arch_sdk.adapters.llama_adapter import LlamaAdapter
 import logging

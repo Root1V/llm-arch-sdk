@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 
 from ..transport.auth_http_client_factory import AuthHttpClientFactory
+from ..config.settings import _sdk_settings
 from .base import BaseLLMAdapter
 
 
@@ -29,7 +30,7 @@ class LangChainAdapter(BaseLLMAdapter):
         timeout: float = 60.0,
         **kwargs
     ):
-        self.base_url = base_url or os.environ.get("LLM_BASE_URL")
+        self.base_url = base_url or _sdk_settings.llm.base_url
         self.timeout = timeout
         self.client_kwargs = kwargs
 
@@ -52,7 +53,7 @@ class LangChainAdapter(BaseLLMAdapter):
             logger.info("Inicializando cliente LangChain ChatOpenAI")
             self._langchain_client = ChatOpenAI(
                 base_url=self.base_url,
-                api_key="unused",
+                api_key="internal-gateway",
                 http_client=self._http_client,
                 default_headers=AuthHttpClientFactory._default_headers(),
                 **self.client_kwargs

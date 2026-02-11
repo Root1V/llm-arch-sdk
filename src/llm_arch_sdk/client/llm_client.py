@@ -7,6 +7,8 @@ from .completions import Completions
 from .embeddings import Embeddings
 from ..transport.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
 from langfuse import observe, get_client
+from ..config.settings import _sdk_settings
+
 
 langfuse = get_client()
 
@@ -25,8 +27,8 @@ class LlmClient(BaseClient):
         self.base_url = base_url.rstrip("/")
         self._http_client = http_client
         self._circuit = CircuitBreaker(
-            failure_threshold=3,
-            reset_timeout=30,
+            failure_threshold=_sdk_settings.circuit_breaker.failure_threshold,
+            reset_timeout=_sdk_settings.circuit_breaker.reset_timeout,
         )
 
         self.completions = Completions(self)

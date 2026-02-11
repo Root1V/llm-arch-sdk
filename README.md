@@ -119,13 +119,14 @@ Estos ejemplos incluyen manejo de errores y funcionan tanto con servidores reale
 ```
 llm_arch_sdk/
 ├── src/
-│   └── llm-arch-sdk/
+│   ├── __init__.py
+│   └── llm_arch_sdk/
 │       ├── adapters/
 │       │   ├── __init__.py
 │       │   ├── base.py
+│       │   ├── lang_adapter.py
 │       │   ├── llama_adapter.py
-       │   ├── open_ai_adapter.py
-       │   └── lang_adapter.py
+│       │   └── open_ai_adapter.py
 │       ├── auth/
 │       │   ├── __init__.py
 │       │   └── token_manager.py
@@ -135,8 +136,7 @@ llm_arch_sdk/
 │       │   ├── chat_completions.py
 │       │   ├── completions.py
 │       │   ├── embeddings.py
-│       │   ├── llm_client.py
-│       │   └── test_llm_client.py
+│       │   └── llm_client.py
 │       ├── models/
 │       │   ├── __init__.py
 │       │   ├── chat_completion.py
@@ -150,32 +150,17 @@ llm_arch_sdk/
 │       │   ├── __init__.py
 │       │   ├── completion_detector.py
 │       │   └── content_normalizer.py
+│       ├── observability/
+│       │   ├── __init__.py
+│       │   ├── helpers.py
+│       │   ├── langfuse_client.py
+│       │   └── masking.py
 │       └── transport/
 │           ├── __init__.py
 │           ├── auth_http_client_factory.py
 │           ├── circuit_breaker.py
 │           └── http_client_factory.py
-├── test/
-│   ├── adapters/
-│   │   ├── test_llama_adapter.py
-│   │   └── test_openai_adapter.py
-│   ├── auth/
-│   │   └── test_token_manager.py
-│   ├── client/
-│   │   ├── test_chat_completions.py
-│   │   ├── test_completions.py
-│   │   ├── test_embeddings.py
-│   │   └── test_llm_client.py
-│   ├── models/
-│   │   └── test_models.py
-│   ├── normalizers/
-│   │   └── test_normalizers.py
-│   └── transport/
-│       └── test_circuit_breaker.py
-├── examples/
-│   ├── basic_usage.py
-│   ├── openai_example.py
-│   └── langchain_example.py
+├── main.py
 ├── pyproject.toml
 ├── uv.lock
 ├── .gitignore

@@ -24,12 +24,12 @@ class LlamaAdapter(BaseLLMAdapter):
 
     def __init__(
         self,
-        base_url: str = _sdk_settings.llm.base_url,
-        timeout: float = _sdk_settings.transport.timeout_seconds,
+        base_url: str = None,
+        timeout: float = None,
         **kwargs
     ):
-        self.base_url = base_url
-        self.timeout = timeout
+        self.base_url = base_url or _sdk_settings.llm.base_url
+        self.timeout = timeout or _sdk_settings.transport.timeout_seconds
         self.client_kwargs = kwargs
 
         self._validate_config()

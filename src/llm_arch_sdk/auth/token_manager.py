@@ -20,11 +20,11 @@ class AuthError(Exception):
 
 
 class TokenManager(httpx.Auth):
-    def __init__(self, timeout: float = _sdk_settings.auth.token_timeout):
+    def __init__(self, timeout: float = None):
         self.base_url = _sdk_settings.llm.base_url
         self.username = _sdk_settings.llm.username
         self.password = _sdk_settings.llm.password
-        self.timeout  = timeout
+        self.timeout  = timeout or _sdk_settings.auth.token_timeout
 
         self._validate()
 

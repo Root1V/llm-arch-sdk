@@ -29,10 +29,20 @@ class ObservabilitySettings:
 # -------------------------
 
 @dataclass
+class LlmEndpoints:
+    """Endpoints del API LLM"""
+    login: str = "/llm/login"
+    completions: str = "/llm/completions"
+    chat_completions: str = "/llm/chat/completions"
+    embeddings: str = "/v1/embeddings"
+
+
+@dataclass
 class LlmBackendEnv:
     base_url: str
     username: Optional[str]
     password: Optional[str]
+    endpoints: LlmEndpoints = field(default_factory=LlmEndpoints)
     
 
 # -------------------------
@@ -80,6 +90,9 @@ class CircuitBreakerSettings:
     failure_threshold: int = 3
     reset_timeout: int = 30
     half_open_success: int = 1
+    # Constantes para retry
+    RETRY_HEADER = "X-Retry"
+    RETRY_VALUE = 1
 
 
 # -------------------------

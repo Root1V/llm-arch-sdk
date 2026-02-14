@@ -4,6 +4,7 @@ from typing import Optional
 
 from .base_client import BaseClient
 from ..models.completion import CompletionResult
+from ..config.settings import _sdk_settings
 from langfuse import observe, get_client
 
 langfuse = get_client()
@@ -22,8 +23,8 @@ class Completions:
     def create(
         self,
         prompt: str,
-        temperature: float = 0.7,
-        n_predict: int = 100,
+        temperature: float ,
+        n_predict: int,
         trace_metadata: Optional[dict] = None,
         trace_tags: Optional[list[str]] = None,
         **kwargs,
@@ -46,7 +47,7 @@ class Completions:
 
         raw = self._client._request(
             "POST",
-            "/llm/completions",
+            _sdk_settings.llm.endpoints.completions,
             json=payload,
         )
 

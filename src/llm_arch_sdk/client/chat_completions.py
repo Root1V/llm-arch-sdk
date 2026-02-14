@@ -4,6 +4,7 @@ from typing import Optional
 
 from .base_client import BaseClient
 from ..models.chat_completion import ChatCompletionResult
+from ..config.settings import _sdk_settings
 
 
 logger = logging.getLogger("llm.client.chatcompletions")
@@ -32,7 +33,7 @@ class ChatCompletions:
         try:
             raw = self._client._request(
                 "POST",
-                "/llm/chat/completions",
+                _sdk_settings.llm.endpoints.chat_completions,
                 json=payload,
             )
 

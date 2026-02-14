@@ -3,6 +3,7 @@ import logging
 from typing import Optional
 
 from .base_client import BaseClient
+from ..config.settings import _sdk_settings
 
 logger = logging.getLogger("llm.client.embeddings")
 
@@ -24,7 +25,7 @@ class Embeddings:
         try:
             return self._client._request(
                 "POST",
-                "/v1/embeddings",
+                _sdk_settings.llm.endpoints.embeddings,
                 json=payload,
             )
         except Exception as exc:

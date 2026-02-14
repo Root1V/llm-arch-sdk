@@ -14,9 +14,6 @@ langfuse = get_client()
 
 logger = logging.getLogger("llm.sdk.auth.token_manager")
 
-# Constantes para retry
-RETRY_HEADER = "X-Retry"
-RETRY_VALUE = "1"
 
 class AuthError(Exception):
     """Errores relacionados con autenticación contra el gateway LLM."""
@@ -72,7 +69,7 @@ class TokenManager(httpx.Auth):
         response = yield request
 
         # 4️ Retry UNA vez si token expiró
-        if response.status_code == HTTPStatus.UNAUTHORIZED and not request.headers.get(RETRY_HEADER):
+        if response.status_code == HTTPStatus.UNAUTHORIZED and not request.headers.get(_sdk_settings.circuit_breaker.RETRY_HEADER):
             logger.warning("401 recibido, refrescando token")
 
             langfuse.update_current_span(
@@ -83,7 +80,7 @@ class TokenManager(httpx.Auth):
                 self.token = self._login()
 
             request.headers["Authorization"] = f"Bearer {self.token}"
-            request.headers[RETRY_HEADER] = RETRY_VALUE
+            request.headers[_sdk_settings.circuit_breaker.RETRY_HEADER] = _sdk_settings.circuit_breaker.RETRY_VALUE
             logger.debug("Reintentando request con nuevo token", request.headers["Authorization"])
 
             yield request
@@ -102,11 +99,12 @@ class TokenManager(httpx.Auth):
             raise AuthError("Circuit breaker abierto: login bloqueado")
 
         try:
+            login_endpoint = _sdk_settings.llm.endpoints.login
             langfuse.update_current_span(
-                metadata={"login.endpoint": "/llm/login"}
+                metadata={"login.endpoint": login_endpoint}
             )
             resp = self._login_client.post(
-                f"{self.base_url}/llm/login",
+                f"{self.base_url}{login_endpoint}",
                 auth=(self.username, self.password),
             )
             resp.raise_for_status()

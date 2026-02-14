@@ -1,9 +1,8 @@
-import os
 import httpx
 import threading
 import logging
+from http import HTTPStatus
 from typing import Optional
-from dotenv import load_dotenv
 
 from ..transport.circuit_breaker import CircuitBreaker
 from ..transport.http_client_factory import HttpClientFactory
@@ -11,11 +10,13 @@ from langfuse import observe, get_client
 from ..config.settings import _sdk_settings
 
 
-load_dotenv()
-
 langfuse = get_client()
 
 logger = logging.getLogger("llm.sdk.auth.token_manager")
+
+# Constantes para retry
+RETRY_HEADER = "X-Retry"
+RETRY_VALUE = "1"
 
 class AuthError(Exception):
     """Errores relacionados con autenticación contra el gateway LLM."""
@@ -71,7 +72,7 @@ class TokenManager(httpx.Auth):
         response = yield request
 
         # 4️ Retry UNA vez si token expiró
-        if response.status_code == 401 and not request.headers.get("X-Retry"):
+        if response.status_code == HTTPStatus.UNAUTHORIZED and not request.headers.get(RETRY_HEADER):
             logger.warning("401 recibido, refrescando token")
 
             langfuse.update_current_span(
@@ -82,7 +83,7 @@ class TokenManager(httpx.Auth):
                 self.token = self._login()
 
             request.headers["Authorization"] = f"Bearer {self.token}"
-            request.headers["X-Retry"] = "1"
+            request.headers[RETRY_HEADER] = RETRY_VALUE
             logger.debug("Reintentando request con nuevo token", request.headers["Authorization"])
 
             yield request

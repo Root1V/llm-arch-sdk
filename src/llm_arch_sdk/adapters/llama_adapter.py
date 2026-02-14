@@ -1,14 +1,10 @@
-import os
 import logging
-from dotenv import load_dotenv
 
 from .base import BaseLLMAdapter
 from ..client.llm_client import LlmClient
 from ..transport.auth_http_client_factory import AuthHttpClientFactory
 from ..config.settings import _sdk_settings
 from langfuse import observe, get_client
-
-load_dotenv()
 
 logger = logging.getLogger("llm.sdk.adapters.llama")
 
@@ -28,8 +24,8 @@ class LlamaAdapter(BaseLLMAdapter):
 
     def __init__(
         self,
-        base_url: str = None,
-        timeout: float = 60.0,
+        base_url: str,
+        timeout: float,
         **kwargs
     ):
         self.base_url = base_url or _sdk_settings.llm.base_url

@@ -10,7 +10,7 @@ import logging
 import os
 from dotenv import load_dotenv
 from llm_arch_sdk.adapters.llama_adapter import LlamaAdapter
-from llm_arch_sdk.observability.langfuse_client import start_trace, record_event, set_active_trace, clear_active_trace
+from llm_arch_sdk.observability.bootstrap import start_trace, record_event, set_active_trace, clear_active_trace
 
 # Configurar logging para ver los logs de Langfuse
 logging.basicConfig(

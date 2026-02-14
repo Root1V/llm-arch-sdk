@@ -3,6 +3,8 @@ import logging
 
 from .bootstrap import get_langfuse_client
 from .helpers import new_session_id
+from ..config.settings import _sdk_settings
+
 
 logger = logging.getLogger("llm.sdk.observability.context")
 
@@ -41,9 +43,9 @@ class ObservabilityContext:
             payload: Dict[str, Any] = {
                 "session_id": sid,
             }
-
-            if user_id:
-                payload["user_id"] = user_id
+            
+            uid = user_id or _sdk_settings.llm.username
+            payload["user_id"] = uid
 
             if metadata:
                 payload["metadata"] = metadata

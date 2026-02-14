@@ -20,11 +20,11 @@ class AuthError(Exception):
 
 
 class TokenManager(httpx.Auth):
-    def __init__(self, timeout: float):
+    def __init__(self, timeout: float = _sdk_settings.auth.token_timeout):
         self.base_url = _sdk_settings.llm.base_url
         self.username = _sdk_settings.llm.username
         self.password = _sdk_settings.llm.password
-        self.timeout = timeout
+        self.timeout  = timeout
 
         self._validate()
 
@@ -32,11 +32,7 @@ class TokenManager(httpx.Auth):
         self._lock = threading.Lock()
 
         self._login_client = HttpClientFactory.create(timeout=self.timeout)
-        
-        self._circuit = CircuitBreaker(
-            failure_threshold= _sdk_settings.circuit_breaker.failure_threshold,
-            reset_timeout=_sdk_settings.circuit_breaker.reset_timeout,
-        )
+        self._circuit = CircuitBreaker()
 
     @observe(
         name="llm.auth.flow",
@@ -69,7 +65,7 @@ class TokenManager(httpx.Auth):
         response = yield request
 
         # 4️ Retry UNA vez si token expiró
-        if response.status_code == HTTPStatus.UNAUTHORIZED and not request.headers.get(_sdk_settings.circuit_breaker.RETRY_HEADER):
+        if response.status_code == HTTPStatus.UNAUTHORIZED and not request.headers.get(_sdk_settings.circuit_breaker.retry_header):
             logger.warning("401 recibido, refrescando token")
 
             langfuse.update_current_span(
@@ -80,7 +76,7 @@ class TokenManager(httpx.Auth):
                 self.token = self._login()
 
             request.headers["Authorization"] = f"Bearer {self.token}"
-            request.headers[_sdk_settings.circuit_breaker.RETRY_HEADER] = _sdk_settings.circuit_breaker.RETRY_VALUE
+            request.headers[_sdk_settings.circuit_breaker.retry_header] = _sdk_settings.circuit_breaker.retry_value
             logger.debug("Reintentando request con nuevo token", request.headers["Authorization"])
 
             yield request

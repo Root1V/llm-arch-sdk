@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 import os
-
+from importlib.metadata import version, PackageNotFoundError
 
 # -------------------------
 # Observability
@@ -35,14 +35,17 @@ class LlmEndpoints:
     completions: str = "/llm/completions"
     chat_completions: str = "/llm/chat/completions"
     embeddings: str = "/v1/embeddings"
+    health: str = "/health"
 
 
 @dataclass
 class LlmBackendEnv:
-    base_url: str
-    username: Optional[str]
-    password: Optional[str]
+    base_url: str = os.getenv("LLM_BASE_URL")
+    username: str = os.getenv("LLM_USERNAME")
+    password: str = os.getenv("LLM_PASSWORD")
     endpoints: LlmEndpoints = field(default_factory=LlmEndpoints)
+    openai_api_key: str = "internal-gateway"
+
     
 
 # -------------------------
@@ -51,11 +54,11 @@ class LlmBackendEnv:
 
 @dataclass
 class LangfuseEnv:
-    public_key: Optional[str]
-    secret_key: Optional[str]
-    base_url: Optional[str]
-    environment: Optional[str]
-    release: Optional[str]
+    public_key: Optional[str] = os.getenv("LANGFUSE_PUBLIC_KEY")
+    secret_key: Optional[str] = os.getenv("LANGFUSE_SECRET_KEY")
+    base_url: Optional[str] = os.getenv("LANGFUSE_BASE_URL")
+    environment: Optional[str] = os.getenv("LANGFUSE_TRACING_ENVIRONMENT")
+    release: Optional[str] = os.getenv("LANGFUSE_RELEASE")
 
 
 # -------------------------
@@ -64,7 +67,7 @@ class LangfuseEnv:
 
 @dataclass
 class OtelEnv:
-    service_name: Optional[str]
+    service_name: Optional[str] = os.getenv("OTEL_SERVICE_NAME")
 
 
 
@@ -90,9 +93,8 @@ class CircuitBreakerSettings:
     failure_threshold: int = 3
     reset_timeout: int = 30
     half_open_success: int = 1
-    # Constantes para retry
-    RETRY_HEADER = "X-Retry"
-    RETRY_VALUE = 1
+    retry_header: str = "X-Retry"
+    retry_value: int = 1
 
 
 # -------------------------
@@ -102,9 +104,13 @@ class CircuitBreakerSettings:
 @dataclass
 class SdkIdentitySettings:
     name: str = "llm-arch-sdk"
-    version: str = os.getenv("LLM_ARCH_SDK_VERSION", "dev")
-    user_agent: str = "SDK-Architecture-PE/LLM-Client/1.0"
-
+    mversion: str = field(default_factory=lambda: version("llm-arch-sdk"))
+    accept: str = "application/json"
+    
+    @property
+    def user_agent(self) -> str:
+        return f"SDK-Arch-PE/LLM-Client/v{self.mversion}"
+    
 
 # -------------------------
 # Root SDK settings
@@ -117,21 +123,9 @@ class SdkSettings:
     circuit_breaker: CircuitBreakerSettings = field(default_factory=CircuitBreakerSettings)
     auth: AuthSettings = field(default_factory=AuthSettings)
     identity: SdkIdentitySettings = field(default_factory=SdkIdentitySettings)
-    llm: LlmBackendEnv = field(default_factory=lambda: LlmBackendEnv(
-        base_url=os.getenv("LLM_BASE_URL"),
-        username=os.getenv("LLM_USERNAME"),
-        password=os.getenv("LLM_PASSWORD"),
-    ))
-    langfuse: LangfuseEnv = field(default_factory=lambda: LangfuseEnv(
-            public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
-            secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
-            base_url=os.getenv("LANGFUSE_BASE_URL"),
-            environment=os.getenv("LANGFUSE_TRACING_ENVIRONMENT"),
-            release=os.getenv("LANGFUSE_RELEASE"),
-        ))
-    otel: OtelEnv = field(default_factory=lambda: OtelEnv(
-            service_name=os.getenv("OTEL_SERVICE_NAME"),
-        ))
+    llm: LlmBackendEnv = field(default_factory=LlmBackendEnv)
+    langfuse: LangfuseEnv = field(default_factory=LangfuseEnv)
+    otel: OtelEnv = field(default_factory=OtelEnv)
 
 
 # singleton

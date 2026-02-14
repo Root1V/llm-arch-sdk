@@ -11,7 +11,7 @@ class HttpClientFactory:
     @classmethod
     def _default_headers(cls, extra: Optional[Mapping[str, str]] = None) -> Dict[str, str]:
         headers = {
-            "Accept": "application/json",
+            "Accept": _sdk_settings.identity.accept,
             "User-Agent": _sdk_settings.identity.user_agent,
         }
         if extra:

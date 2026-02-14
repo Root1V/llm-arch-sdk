@@ -1,5 +1,6 @@
 import httpx
 import logging
+from http import HTTPStatus
 
 from .base_client import BaseClient
 from .chat_completions import ChatCompletions
@@ -26,10 +27,7 @@ class LlmClient(BaseClient):
     def __init__(self, base_url: str, http_client: httpx.Client):
         self.base_url = base_url.rstrip("/")
         self._http_client = http_client
-        self._circuit = CircuitBreaker(
-            failure_threshold=_sdk_settings.circuit_breaker.failure_threshold,
-            reset_timeout=_sdk_settings.circuit_breaker.reset_timeout,
-        )
+        self._circuit = CircuitBreaker()
 
         self.completions = Completions(self)
         self.chat = ChatCompletions(self)
@@ -55,7 +53,7 @@ class LlmClient(BaseClient):
                 f"{self.base_url}{endpoint}",
                 **kwargs,
             )
-            if resp.status_code >= 500:
+            if resp.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
                 self._circuit.record_failure()
                 raise LlmAPIError(f"Error {resp.status_code}")
 
@@ -100,5 +98,5 @@ class LlmClient(BaseClient):
         capture_output=False,
     )
     def health(self):
-        return self._request("GET", "/health")
+        return self._request("GET", _sdk_settings.llm.endpoints.health)
     

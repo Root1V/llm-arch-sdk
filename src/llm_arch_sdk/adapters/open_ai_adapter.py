@@ -21,11 +21,11 @@ class OpenAIAdapter(BaseLLMAdapter):
 
     def __init__(
         self,
-        base_url: str,
-        timeout: float,
+        base_url: str = _sdk_settings.llm.base_url,
+        timeout: float = _sdk_settings.transport.timeout_seconds,
         **kwargs
     ):
-        self.base_url = base_url or _sdk_settings.llm.base_url
+        self.base_url = base_url
         self.timeout = timeout
         self.client_kwargs = kwargs
 
@@ -49,7 +49,7 @@ class OpenAIAdapter(BaseLLMAdapter):
             
             self._openai_client = OpenAI(
                 base_url=self.base_url,
-                api_key="internal-gateway",
+                api_key=_sdk_settings.llm.openai_api_key,
                 http_client=self._http_client,
                 default_headers=AuthHttpClientFactory._default_headers(),
                 **self.client_kwargs,

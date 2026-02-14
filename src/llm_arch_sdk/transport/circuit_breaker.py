@@ -2,6 +2,8 @@ import time
 import logging
 from enum import Enum
 
+from ..config.settings import _sdk_settings
+
 logger = logging.getLogger("llm.sdk.transport.circuit_breaker")
 
 class CircuitState(Enum):
@@ -19,11 +21,11 @@ class CircuitBreaker:
     Circuit Breaker con estados:
     """
 
-    def __init__(self, failure_threshold: int, reset_timeout: int, half_open_success: int):
+    def __init__(self, failure_threshold: int = None, reset_timeout: int = None, half_open_success: int = None):
 
-        self.failure_threshold = failure_threshold
-        self.reset_timeout = reset_timeout
-        self.half_open_success = half_open_success
+        self.failure_threshold = failure_threshold or _sdk_settings.circuit_breaker.failure_threshold
+        self.reset_timeout = reset_timeout or _sdk_settings.circuit_breaker.reset_timeout
+        self.half_open_success = half_open_success or _sdk_settings.circuit_breaker.half_open_success
 
         self._state = CircuitState.CLOSED
         self._failure_count = 0
